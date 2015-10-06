@@ -1,9 +1,12 @@
 //Magyar Máté - Q8C1NV
 
 
-//myCreature.h
-#ifndef __MY_CREATURE_H__
-#define __MY_CREATURE_H__
+
+#include <iostream>
+#include <typeinfo>
+#include <string>
+
+using namespace std;
 
 
 //Absztrakt õs élõlény osztály
@@ -41,19 +44,8 @@ myCreature::~myCreature()
 {
 }
 
-#endif
 
 
-//myAnimals.h
-#ifndef __MY_ANIMALS__
-#define __MY_ANIMALS__
-
-//Includes iostream for cout, string for string, myCreature for polymorphism
-#include <iostream>
-#include <string>
-//#include "myCreature.h"
-
-using namespace std;
 
 class myAnimal : public myCreature
 {
@@ -91,18 +83,6 @@ void myAnimal::printOut() {
 }
 
 
-#endif
-
-
-//myHerbs.h
-#ifndef __MY_HERBS__
-#define __MY_HERBS__
-
-#include <iostream>
-//#include "myCreature.h"
-
-using namespace std;
-
 class myHerb : public myCreature
 {
 public:
@@ -136,18 +116,8 @@ void myHerb::printOut() {
 	cout << "Tipus: Noveny" << endl << "Eletkorom: " << this->getAge() << endl << "Van-e viragom: " << (this->Flower ? "van" : "nincs") << endl << "Hanyszor kell megontozni egy heten: " << water << endl << endl;
 }
 
-#endif
 
-
-
-#include <iostream>
-#include <typeinfo>
-#include <string>
-//#include "myAnimals.h"
-//#include "myHerbs.h"
-
-
-int main(int args, char* argv) {
+int main(int args, char** argv) {
 
 	//Teszt
 	myCreature* myArray[4];
@@ -162,8 +132,8 @@ int main(int args, char* argv) {
 	float avgAge = 0;
 	for (i = 0;i < 4;i++) {
 		myArray[i]->printOut();
-		if (!string(typeid(*myArray[i]).name()).compare("class myHerb")) { //Kb. ugyanaz, mintha irtam volna egy gettype metodust
-			if((dynamic_cast<myHerb*>(myArray[i]))->isFlower()) flowers++; //Lehetne egyszerubben, de logikailag az, hogy van-e virag, nem tartozik az ososztalyba
+		if (!string(typeid(*myArray[i]).name()).compare("class myHerb")) { 
+			if((dynamic_cast<myHerb*>(myArray[i]))->isFlower()) flowers++;
 		}
 		avgAge += myArray[i]->getAge();
 	}
