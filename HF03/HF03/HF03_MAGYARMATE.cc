@@ -1,3 +1,4 @@
+//Magyar Máté Q8C1NV
 #define BUF_MAX 1000
 #define BUF_MIN 1
 #define BUD_DEFAULT 10
