@@ -28,7 +28,7 @@ template <typename T>
 class RLptr
 {
 public:
-	explicit RLptr(T* object = 0) : pData(object), prev(nullptr), next(nullptr) {}
+	explicit RLptr(T* object = 0) : pData(object), prev(nullptr), next(nullptr) {} //Tanulság: g++ nem nullptr-re inicializálja, míg az msvc igen.
 
 	RLptr(RLptr& other) {
 		pData = other.pData;
