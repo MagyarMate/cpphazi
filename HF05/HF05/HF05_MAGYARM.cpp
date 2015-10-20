@@ -1,7 +1,12 @@
 //Magyar Máté Q8C1NV
+#define _USE_MATH_DEFINES
 #include <iostream>
 #include <cmath>
-#define M_PI 3.14159265358979323846
+
+
+#ifndef M_PI
+#define M_PI           3.14159265358979323846
+#endif
 
 ////////////////
 // konstansok //
@@ -22,7 +27,7 @@ class SineSeries {
 	/// rekurzív törzs
 	enum { go = (K + 1 != J) };
 public:
-	static inline float accumulate()
+	static inline VALTYPE accumulate()
 	{
 		return 1 - (I * 2 * M_PI / N)*(I * 2 * M_PI / N) / (2 * K + 2) / (2 * K + 3) *
 			SineSeries<N*go, I*go, J*go, (K + 1)*go>::accumulate();
@@ -33,7 +38,7 @@ template<>
 class SineSeries<0, 0, 0, 0> {
 	/// rekurziólezáró törzs
 public:
-	static inline float accumulate()
+	static inline VALTYPE accumulate()
 	{
 		return 1;
 	}
@@ -49,6 +54,43 @@ public:
 	}
 };
 
+// <EXP>
+
+template<int I, int J, int K>
+class ExpSeries {
+	/// rekurzív törzs
+	enum { go = (K + 1 != J) };
+public:
+	static inline VALTYPE accumulate()
+	{
+		return 1 + ((VALTYPE)I / K) *
+			ExpSeries<I*go, J*go, (K + 1)*go>::accumulate();
+	}
+};
+
+template<>
+class ExpSeries<0, 0, 0> {
+	/// rekurziólezáró törzs
+public:
+	static inline VALTYPE accumulate()
+	{
+		return 1;
+	}
+};
+
+/// közvetlenül hívott tag
+template<int I>
+class Exp {
+public:
+	static inline VALTYPE exp()
+	{
+		return ExpSeries<I, PREC, 1>::accumulate();
+	}
+};
+
+
+// </EXP>
+
 
 template<int I>
 class loop {
@@ -61,6 +103,7 @@ private:
 	enum { go = (I - 1) != 0 };
 public:
 	static inline void f(VALTYPE* sin_l) { 
+		sin_l[I] = Sine<SIZE, I>::sin();
 		loop<go ? (I - 1) : 0>::f(sin_l);
 	}
 };
@@ -75,24 +118,56 @@ public:
 /// Mivel a loop<> visszafelé számolja I-t,
 /// szükséges egy olyan loop-ot is csinálni,
 /// ami elõrefelé lépteti I-t.
+
 template<int N, int I>
 class loop_inc {
 private:
-	enum { go = (I + 1) < N };
+	enum { go = (I + 1) != N };
 public:
 	static inline void f(VALTYPE* sin_l) { 
 		sin_l[I] = Sine<N, I>::sin();
-		loop_inc<N, go ? (I + 1) : N-1>::f(sin_l);
+		loop_inc<N, go ? (I + 1) : N >::f(sin_l);
 	}
 };
 template<>
-class loop_inc<0, 0> {
+class loop_inc<SIZE, SIZE> {
 public:
 	static inline void f(VALTYPE* sin_l) { }
 };
 
+template<int N, int I>
+class loop_inc_cos {
+private:
+	enum { go = (I + 1) != N };
+public:
+	static inline void f(VALTYPE* sin_l) {
+		sin_l[I] = Sine<N, I+90>::sin();
+		loop_inc<N, go ? (I + 1) : N >::f(sin_l);
+	}
+};
+
+template<int N, int I>
+class loop_inc_exp {
+private:
+	enum { go = (I + 1) != N };
+public:
+	static inline void f(VALTYPE* exp_l) {
+		exp_l[I] = Exp<I>::exp();
+		loop_inc_exp<N, go ? (I + 1) : N >::f(exp_l);
+	}
+};
+
+template<>
+class loop_inc_exp<SIZE, SIZE> {
+public:
+	static inline void f(VALTYPE* exp_l) { }
+};
+
+
 /// a feltöltendõ tömb
 VALTYPE sin_t[SIZE];
+VALTYPE cos_t[SIZE];
+VALTYPE exp_t[SIZE];
 
 /// sin(alpha) lekérdezése.
 /// Egy bemenõ és több kimenõ paramétere van.
@@ -146,15 +221,18 @@ bool arcsin_lookup(
 	val_hi = 360.0*val_hi_idx / SIZE;
 	alpha_lo = sin_t[val_lo_idx];
 	alpha_hi = sin_t[val_hi_idx];
+	return true;
 }
 
 int main() {
 	loop_inc<SIZE, 0>::f(sin_t);
+	loop_inc_cos<SIZE, 0>::f(cos_t); //Azért így csináltam, hogy mûködjön az eredeti teszt kód.
+	loop_inc_exp<SIZE, 0>::f(exp_t); //Nagyon érzékennyé válik a PREC értékére, így a beállított 10-es kb 5 értékig jó, utána már nem konvergál az eredeti függvényhez.
 
 
 	// ellenõrzés
-		for (int i=0;i<SIZE;i++)
-			cout<<"sin("<<((double)360*i)/SIZE<<")="<<sin_t[i]<<endl;
+	//	for (int i=0;i<SIZE;i++)
+	//		cout<<"exp("<<(i)<<")="<<exp_t[i]<<endl;
 
 	VALTYPE alpha, val;
 	VALTYPE alpha_lo, alpha_hi;
@@ -182,3 +260,21 @@ int main() {
 	}
 	return 0;
 }
+
+/*
+További ritkaságok:
+
+cos, exp megvalósítva, inverz függvények hiányoznak.
+
+Különbözõ tömbméretek:
+A tömb méretének növelése megnöveli a fordítási idõt, ahogy a pontosság növelése is -> mindkettõ növeli a rekurzió mélységét.
+A pontosság növelésekor a sor jobban konvergál a függvényértékhez -> csökken a hiba (exp-nél látványos a jelenség).
+
+VALTYPE függõség:
+Mivel belefordul a kódba minden lépés, így size(VALTYPE)*PREC*SIZE*C mérettel növekedik a méret.
+Az eredmények pontossága pedig a VALTYPE típus pontosságától függ, így pl int-nél felesleges nagy prec-et megadni szinusznál, mert úgyis 0 v. 1 lesz.
+
+Matematikai hiba:
+Arcsin függvénynél negatív értékre nem ad vissza értékelhetõ választ -> csak 0° és 180° között vizsgáljuk.
+
+*/
