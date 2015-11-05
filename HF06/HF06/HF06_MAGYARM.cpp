@@ -13,8 +13,8 @@ public:
 	TimeStamp(int hour, int min) : hour(hour), min(min) {};
 	~TimeStamp() {};
 
-	friend const bool operator<(const TimeStamp& lVal, const TimeStamp& rVal) {
-		return lVal.hour < rVal.hour || ( lVal.hour == rVal.hour && lVal.min < rVal.min );
+	bool operator<(const TimeStamp& rVal) const {
+		return hour < rVal.hour || ( hour == rVal.hour && min < rVal.min );
 	}
 
 	friend ostream& operator<<(ostream& os, const TimeStamp& myTimeStamp) {
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 
 	for (int i = 0; i < vData.size(); i++) {
 		TimeStamp temp(vHours[i], vMins[i]);
-		mData.insert(std::pair<TimeStamp, double>(temp, vData[i]));
+		mData[temp] = vData[i];
 	}
 
 	for (auto data : mData) {
