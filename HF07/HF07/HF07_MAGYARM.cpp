@@ -45,7 +45,6 @@ public:
 	// konstr.
 	OstreamIteratorCnt(std::ostream &a, const char *b, int c, myCounter& counter)
 		: ostream_iterator<int>(a), os(a), size(c), cnt(0), sep(b), counter(counter) { this->counter.con++; };
-
 	// op++
 	OstreamIteratorCnt& operator++() {
 		counter.pp++;
@@ -82,14 +81,13 @@ int main() {
 	// ostream_iterator => OstreamIteratorCnt
 	ostream_iterator<int> oi(cout, "\t");
 	myCounter cnt;
-	OstreamIteratorCnt myOI(cout, "\t", AN,cnt);
+	OstreamIteratorCnt myOI(cout, "\t", AN, cnt);
 
-	int con = 0, pp = 0, ast = 0, eq = 0;
 
 	//copy(A, A + AN, oi);
 	copy(A, A + AN, myOI);
 
-
+	
 	cout << endl << "Az egyes operatorok ennyiszer lettek meghivva az oi objektumban:" << myOI << endl;
 
 
